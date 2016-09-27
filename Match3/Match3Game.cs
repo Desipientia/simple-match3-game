@@ -1,4 +1,5 @@
-﻿using Microsoft.Xna.Framework;
+﻿using Match3.Entities;
+using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Graphics;
 using Microsoft.Xna.Framework.Input;
 using MonoGame.Extended.BitmapFonts;
@@ -8,19 +9,20 @@ namespace Match3
     /// <summary>
     /// This is the main type for your game.
     /// </summary>
-    public class Game1 : Game
+    public class Match3Game : Game
     {
         GraphicsDeviceManager graphics;
-        SpriteBatch spriteBatch;
-        BitmapFont bitmapFont;
+        MainMenu mainMenu;
 
-        public Game1()
+        public Match3Game()
         {
             graphics = new GraphicsDeviceManager(this);
             Content.RootDirectory = "Content";
+
+            graphics.PreferredBackBufferWidth = 720;
+            graphics.PreferredBackBufferHeight = 720;
             IsMouseVisible = true;
         }
-
 
         /// <summary>
         /// Allows the game to perform any initialization it needs to before starting to run.
@@ -30,9 +32,9 @@ namespace Match3
         /// </summary>
         protected override void Initialize()
         {
-            // TODO: Add your initialization logic here
+            mainMenu = new MainMenu(this);
+            mainMenu.Initialize();
             base.Initialize();
-
         }
 
 
@@ -42,9 +44,6 @@ namespace Match3
         /// </summary>
         protected override void LoadContent()
         {
-            spriteBatch = new SpriteBatch(GraphicsDevice);
-            bitmapFont = Content.Load<BitmapFont>("main-font");
-
         }
 
 
@@ -54,7 +53,6 @@ namespace Match3
         /// </summary>
         protected override void UnloadContent()
         {
-
         }
 
 
@@ -68,8 +66,6 @@ namespace Match3
             if (GamePad.GetState(PlayerIndex.One).Buttons.Back == ButtonState.Pressed || Keyboard.GetState().IsKeyDown(Keys.Escape))
                 Exit();
 
-            
-
             base.Update(gameTime);
         }
 
@@ -79,13 +75,7 @@ namespace Match3
         /// <param name="gameTime">Provides a snapshot of timing values.</param>
         protected override void Draw(GameTime gameTime)
         {
-            GraphicsDevice.Clear(Color.CornflowerBlue);
-
-            spriteBatch.Begin();
-            spriteBatch.DrawString(bitmapFont, "Play!", new Vector2(100, 50), Color.Orange);
-            spriteBatch.DrawString(bitmapFont, "Score:20", new Vector2(100, 120), Color.WhiteSmoke);
-            spriteBatch.End();           
-
+            mainMenu.Draw(gameTime);
             base.Draw(gameTime);
         }
     }
