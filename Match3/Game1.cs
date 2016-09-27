@@ -1,6 +1,7 @@
 ﻿using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Graphics;
 using Microsoft.Xna.Framework.Input;
+using MonoGame.Extended.BitmapFonts;
 
 namespace Match3
 {
@@ -11,12 +12,15 @@ namespace Match3
     {
         GraphicsDeviceManager graphics;
         SpriteBatch spriteBatch;
+        BitmapFont bitmapFont;
 
         public Game1()
         {
             graphics = new GraphicsDeviceManager(this);
             Content.RootDirectory = "Content";
+            IsMouseVisible = true;
         }
+
 
         /// <summary>
         /// Allows the game to perform any initialization it needs to before starting to run.
@@ -27,9 +31,10 @@ namespace Match3
         protected override void Initialize()
         {
             // TODO: Add your initialization logic here
-
             base.Initialize();
+
         }
+
 
         /// <summary>
         /// LoadContent will be called once per game and is the place to load
@@ -37,11 +42,11 @@ namespace Match3
         /// </summary>
         protected override void LoadContent()
         {
-            // Create a new SpriteBatch, which can be used to draw textures.
             spriteBatch = new SpriteBatch(GraphicsDevice);
+            bitmapFont = Content.Load<BitmapFont>("main-font");
 
-            // TODO: use this.Content to load your game content here
         }
+
 
         /// <summary>
         /// UnloadContent will be called once per game and is the place to unload
@@ -49,8 +54,9 @@ namespace Match3
         /// </summary>
         protected override void UnloadContent()
         {
-            // TODO: Unload any non ContentManager content here
+
         }
+
 
         /// <summary>
         /// Allows the game to run logic such as updating the world,
@@ -62,7 +68,7 @@ namespace Match3
             if (GamePad.GetState(PlayerIndex.One).Buttons.Back == ButtonState.Pressed || Keyboard.GetState().IsKeyDown(Keys.Escape))
                 Exit();
 
-            // TODO: Add your update logic here
+            
 
             base.Update(gameTime);
         }
@@ -75,7 +81,10 @@ namespace Match3
         {
             GraphicsDevice.Clear(Color.CornflowerBlue);
 
-            // TODO: Add your drawing code here
+            spriteBatch.Begin();
+            spriteBatch.DrawString(bitmapFont, "Play!", new Vector2(100, 50), Color.Orange);
+            spriteBatch.DrawString(bitmapFont, "Score:20", new Vector2(100, 120), Color.WhiteSmoke);
+            spriteBatch.End();           
 
             base.Draw(gameTime);
         }
