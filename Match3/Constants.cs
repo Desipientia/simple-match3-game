@@ -10,6 +10,8 @@ namespace Match3
 
         public const int GameDuration = 60;
 
+        public const float AnimationVelocity = 8f;
+
         public const string GameName = "Match3 Balls";
         public const string BaseFontName = "base-font";
 

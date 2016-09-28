@@ -17,12 +17,15 @@ namespace Match3
     {
         public bool IsActive = false;
         public Point GridPosition;
-        public Vector2 Position;
         public BallColor CurrentColor;
 
+        private Vector2 _position;
         private Texture2D _baseTexture;
         private Texture2D _activeTexture;
         private SpriteBatch _spriteBatch;
+
+        private bool _isMoving = false;
+        private Vector2 _moveDirection;
 
         public BallElement(BallColor ballColor, Point position, Match3Game game) : base(game)
         {
@@ -30,10 +33,22 @@ namespace Match3
             GridPosition = position;
         }
 
+        public BallElement(BallElement ball) : base(ball.Game)
+        {
+            IsActive = ball.IsActive;
+            GridPosition = ball.GridPosition;
+            CurrentColor = ball.CurrentColor;
+
+            _position = ball._position;
+            _baseTexture = ball._baseTexture;
+            _activeTexture = ball._activeTexture;
+            _spriteBatch = ball._spriteBatch;
+        }
+
 
         public override void Initialize()
         {
-            Position = new Vector2(0, 0);
+            _position = new Vector2(0, 0);
             _spriteBatch = new SpriteBatch(Game.GraphicsDevice);
 
             base.Initialize();
@@ -54,20 +69,41 @@ namespace Match3
 
         public override void Update(GameTime gameTime)
         {
+            int endPositionX = Constants.GameFieldX + Constants.GameFieldCell * GridPosition.X;
+            int endPositionY = Constants.GameFieldY + Constants.GameFieldCell * GridPosition.Y;
+
+            if (_isMoving)
+            {
+                _position += getMoveDirection(endPositionX, endPositionY);
+
+                if (_position.X >= endPositionX && _position.Y >= endPositionY)
+                {
+                    _isMoving = false;
+                }
+            }
+            else
+            {
+                _position.X = endPositionX;
+                _position.Y = endPositionY;
+            }
+
             base.Update(gameTime);
         }
 
 
         public override void Draw(GameTime gameTime)
         {
-            Position.X = Constants.GameFieldX + Constants.GameFieldCell * GridPosition.X;
-            Position.Y = Constants.GameFieldY + Constants.GameFieldCell * GridPosition.Y;
-
             _spriteBatch.Begin();
-            _spriteBatch.Draw(IsActive ? _activeTexture : _baseTexture, Position, Color.White);
+            _spriteBatch.Draw(IsActive ? _activeTexture : _baseTexture, _position, Color.White);
             _spriteBatch.End();
 
             base.Draw(gameTime);
+        }
+
+
+        public void Move()
+        {
+            _isMoving = true; 
         }
 
 
@@ -97,6 +133,16 @@ namespace Match3
                     return "";
             }
             return textureName + "-ball";
+        }
+
+        private Vector2 getMoveDirection(int endX, int endY)
+        {
+            float x = endX == _position.X ? 0 : endX > _position.X ? Constants.AnimationVelocity : 
+                -Constants.AnimationVelocity; 
+            float y = endY == _position.Y ? 0 : endY > _position.Y ? Constants.AnimationVelocity :
+                -Constants.AnimationVelocity;
+            
+            return new Vector2(x, y);
         }
 
     }

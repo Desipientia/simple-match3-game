@@ -24,10 +24,11 @@ namespace Match3.Entities
         private Button _okButton;
         private Texture2D _gameOverMessage;
         private Texture2D _gameScreenTexture;
+
         private Rectangle _fieldBoundingBox;
         private GameComponentCollection _gameField;
-
         private ButtonState _previousLeftButtonState = ButtonState.Pressed;
+        private BallElement _activeBall;// = null;
 
         public GameScreen(Match3Game game) : base(game) { }
 
@@ -77,6 +78,11 @@ namespace Match3.Entities
             else
             {
                 _okButton.Update(gameTime);
+            }
+
+            foreach (BallElement ball in _gameField)
+            {
+                ball.Update(gameTime);
             }
 
             base.Update(gameTime);
@@ -180,7 +186,7 @@ namespace Match3.Entities
 
         private bool ballsAtLeftFormChain(BallElement ball)
         {
-            return ballsAtLeftFormChain((int)ball.Position.X, (int)ball.Position.Y, ball.CurrentColor);
+            return ballsAtLeftFormChain((int)ball.GridPosition.X, (int)ball.GridPosition.Y, ball.CurrentColor);
         }
 
         private bool ballsAtLeftFormChain(int x, int y, BallColor color)
@@ -195,7 +201,7 @@ namespace Match3.Entities
 
         private bool ballsAtTopFormChain(BallElement ball)
         {
-            return ballsAtTopFormChain((int)ball.Position.X, (int)ball.Position.Y, ball.CurrentColor);
+            return ballsAtTopFormChain((int)ball.GridPosition.X, (int)ball.GridPosition.Y, ball.CurrentColor);
         }
 
         private bool ballsAtTopFormChain(int x, int y, BallColor color)
@@ -205,6 +211,90 @@ namespace Match3.Entities
 
             return ((BallElement)_gameField[firstBallIndex]).CurrentColor == color &&
                 ((BallElement)_gameField[secondBallIndex]).CurrentColor == color;
+        }
+
+
+        private void manageBallClick()
+        {
+            var mouseState = Mouse.GetState();
+
+            if (_fieldBoundingBox.Contains(mouseState.X, mouseState.Y))
+            {
+                if (mouseState.LeftButton == ButtonState.Pressed &&
+                    _previousLeftButtonState == ButtonState.Released)
+                {
+                    if (_activeBall == null)
+                    {
+                        BallElement ball = getSelectedBall(mouseState);
+
+                        ball.IsActive = true;
+                        _activeBall = ball;
+                        _previousLeftButtonState = ButtonState.Pressed;
+                    }
+                    else
+                    {
+                        BallElement currentBall = getSelectedBall(mouseState);
+
+                        _activeBall.IsActive = false;
+
+                        if (areNeighbours(currentBall.GridPosition, _activeBall.GridPosition))
+                        {
+                            swapBalls(currentBall, _activeBall);
+                        }
+
+                        _activeBall = null;
+                        _previousLeftButtonState = ButtonState.Pressed;
+                    }
+                }
+                else if (mouseState.LeftButton == ButtonState.Released)
+                {
+                    _previousLeftButtonState = ButtonState.Released;
+                }
+            }
+        }
+
+
+        private BallElement getSelectedBall(MouseState mouseState)
+        {
+            int x = (mouseState.X - Constants.GameFieldX) / Constants.GameFieldCell;
+            int y = (mouseState.Y - Constants.GameFieldY) / Constants.GameFieldCell;
+
+            return (BallElement)_gameField[y * _width + x];
+        }
+
+
+        private bool areNeighbours(Point firstBall, Point secondBall)
+        {
+            bool areHorisontalNeighbours = firstBall.Y == secondBall.Y && differByOne(firstBall.X, secondBall.X);
+            bool areVerticalNeighbours = firstBall.X == secondBall.X && differByOne(firstBall.Y, secondBall.Y);
+
+            return (areHorisontalNeighbours && !areVerticalNeighbours) 
+                || (areVerticalNeighbours && !areHorisontalNeighbours);
+        }
+
+
+        private bool differByOne(int a, int b)
+        {
+            return a == b - 1 || a == b + 1;
+        }
+
+
+        private void swapBalls(BallElement firstBall, BallElement secondBall)
+        {
+            int firstBallIndex = firstBall.GridPosition.Y * _width + firstBall.GridPosition.X;
+            int secondBallIndex = secondBall.GridPosition.Y * _width + secondBall.GridPosition.X;
+            BallElement newFirstBall = new BallElement(secondBall);
+            BallElement newSecondBall = new BallElement(firstBall);
+
+            newFirstBall.GridPosition = firstBall.GridPosition;
+            newSecondBall.GridPosition = secondBall.GridPosition;
+            newFirstBall.Move();
+            newSecondBall.Move();
+
+            _gameField.RemoveAt(firstBallIndex);
+            _gameField.Insert(firstBallIndex, newFirstBall);
+            _gameField.RemoveAt(secondBallIndex);
+            _gameField.Insert(secondBallIndex, newSecondBall);
         }
 
     }
