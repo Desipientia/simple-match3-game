@@ -15,18 +15,18 @@ namespace Match3
 
     class BallElement : DrawableGameComponent
     {
+        public Point gridPosition;
         public bool isActive = false;
         public BallColor CurrentColor;
 
-        private Vector2 _position;
         private Texture2D _baseTexture;
         private Texture2D _activeTexture;
         private SpriteBatch _spriteBatch;
 
-        public BallElement(BallColor ballColor, Vector2 position, Match3Game game) : base(game)
+        public BallElement(BallColor ballColor, Point position, Match3Game game) : base(game)
         {
             CurrentColor = ballColor;
-            _position = position;
+            gridPosition = position;
         }
 
 
@@ -58,8 +58,12 @@ namespace Match3
 
         public override void Draw(GameTime gameTime)
         {
+            int positionX = Constants.GameFieldX + Constants.GameFieldCell * gridPosition.X;
+            int positionY = Constants.GameFieldY + Constants.GameFieldCell * gridPosition.Y;
+            Vector2 position = new Vector2(positionX, positionY);
+
             _spriteBatch.Begin();
-            _spriteBatch.Draw(isActive ? _activeTexture : _baseTexture, _position, Color.White);
+            _spriteBatch.Draw(isActive ? _activeTexture : _baseTexture, position, Color.White);
             _spriteBatch.End();
 
             base.Draw(gameTime);

@@ -5,6 +5,6 @@ namespace Match3
 {
     class LineElement : BallElement
     {
-        public LineElement(BallColor color, Vector2 position, Match3Game game) : base(color, position, game) { }
+        public LineElement(BallColor color, Point position, Match3Game game) : base(color, position, game) { }
     }
 }

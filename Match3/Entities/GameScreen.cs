@@ -11,8 +11,8 @@ namespace Match3.Entities
         public bool isActive = false;
         public MainMenu mainMenu;
 
-        //private int _width = 8;
-        //private int _height = 8;
+        private int _width = 8;
+        private int _height = 8;
         private int _score;
         private int _duration;
         private bool _isGameOver = false;
@@ -23,6 +23,7 @@ namespace Match3.Entities
         private Button _okButton;
         private Texture2D _gameOverMessage;
         private Texture2D _gameScreenTexture;
+        private GameComponentCollection _gameField;
 
         public GameScreen(Match3Game game) : base(game) { }
 
@@ -36,6 +37,13 @@ namespace Match3.Entities
             _stopwatch = new Stopwatch();
             _okButton = new Button(okButtonTexturePack, okButtonBox, gameOverClick, (Match3Game)Game);
             _okButton.Initialize();
+
+            generateGameField();
+
+            foreach (BallElement ball in _gameField)
+            {
+                ball.Initialize();
+            }
 
             base.Initialize();
         }
@@ -57,9 +65,17 @@ namespace Match3.Entities
 
             if (!_isGameOver)
             {
-                manageGameTime(); 
+                manageGameTime();
             }
-            _okButton.Update(gameTime);
+            else
+            {
+                _okButton.Update(gameTime);
+            }
+
+            foreach (BallElement ball in _gameField)
+            {
+                ball.Update(gameTime);
+            }
 
             base.Update(gameTime);
         }
@@ -84,13 +100,18 @@ namespace Match3.Entities
             else
             {
                 _spriteBatch.End();
+
+                foreach (BallElement ball in _gameField)
+                {
+                    ball.Draw(gameTime);
+                }
             }
 
             base.Draw(gameTime);
         }
 
         
-        // Private methods
+        // Private methods.
         private void manageGameTime()
         {
             if (_stopwatch.IsRunning)
@@ -121,5 +142,25 @@ namespace Match3.Entities
             isActive = false;
             mainMenu.isActive = true;
         }
+
+
+        private void generateGameField()
+        {
+            Random rand = new Random();
+
+            _gameField = new GameComponentCollection();
+
+            for (int i = 0; i < _width; i++)
+            {
+                for (int j = 0; j < _height; j++)
+                {
+                    BallColor color = (BallColor)rand.Next(0, 5);
+                    Point position = new Point(i, j);
+
+                    _gameField.Add(new BallElement(color, position, (Match3Game)Game));
+                }
+            }
+        }
+
     }
 }

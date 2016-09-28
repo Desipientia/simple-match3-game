@@ -76,7 +76,7 @@ namespace Match3.Entities
                 {
                     if (_action != null && _state == BState.Hover)
                     {
-                        // TODO: Add delay to draw pressed button before the action start
+                        // TODO: Add delay to draw pressed button before the action start.
                         _action.Invoke();
                     }
                     _state = BState.Press;

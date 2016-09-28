@@ -8,7 +8,7 @@ namespace Match3
         public const int BufferWidth = 720;
         public const int BufferHeight = 720;
 
-        public const int GameDuration = 3;
+        public const int GameDuration = 60;
 
         public const string GameName = "Match3 Balls";
         public const string BaseFontName = "base-font";
@@ -24,10 +24,12 @@ namespace Match3
         public const string PlayButtonPressTexture = "img/play-btn-press";
 
         public const int ScoreBoxX = 20;
-        public const int TimeBoxX = 540;
+        public const int TimeBoxX = 510;
         public const int ScoreBoardY = 30;
+
         public const int GameFieldX = 120;
         public const int GameFieldY = 170;
+        public const int GameFieldCell = 60;
 
         public const string GameScreenTexture = "img/game-screen";
         public const string GameOverMessageTexture = "img/game-over-message";
