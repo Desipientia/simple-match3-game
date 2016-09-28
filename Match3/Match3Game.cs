@@ -13,14 +13,15 @@ namespace Match3
     {
         GraphicsDeviceManager graphics;
         MainMenu mainMenu;
+        GameScreen gameScreen;
 
         public Match3Game()
         {
             graphics = new GraphicsDeviceManager(this);
             Content.RootDirectory = "Content";
 
-            graphics.PreferredBackBufferWidth = 720;
-            graphics.PreferredBackBufferHeight = 720;
+            graphics.PreferredBackBufferWidth = Constants.BufferWidth;
+            graphics.PreferredBackBufferHeight = Constants.BufferHeight;
             IsMouseVisible = true;
         }
 
@@ -34,6 +35,13 @@ namespace Match3
         {
             mainMenu = new MainMenu(this);
             mainMenu.Initialize();
+
+            gameScreen = new GameScreen(this);
+            gameScreen.Initialize();
+
+            mainMenu.gameScreen = gameScreen;
+            gameScreen.mainMenu = mainMenu;
+
             base.Initialize();
         }
 
@@ -66,6 +74,9 @@ namespace Match3
             if (GamePad.GetState(PlayerIndex.One).Buttons.Back == ButtonState.Pressed || Keyboard.GetState().IsKeyDown(Keys.Escape))
                 Exit();
 
+            mainMenu.Update(gameTime);
+            gameScreen.Update(gameTime);
+
             base.Update(gameTime);
         }
 
@@ -75,7 +86,10 @@ namespace Match3
         /// <param name="gameTime">Provides a snapshot of timing values.</param>
         protected override void Draw(GameTime gameTime)
         {
+            GraphicsDevice.Clear(Color.CornflowerBlue);
+
             mainMenu.Draw(gameTime);
+            gameScreen.Draw(gameTime);
             base.Draw(gameTime);
         }
     }

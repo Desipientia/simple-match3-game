@@ -38,7 +38,9 @@
     <ApplicationIcon>Icon.ico</ApplicationIcon>
   </PropertyGroup>
   <ItemGroup>
+    <Compile Include="Constants.cs" />
     <Compile Include="Entities\Button.cs" />
+    <Compile Include="Entities\GameScreen.cs" />
     <Compile Include="Entities\MainMenu.cs" />
     <Compile Include="Match3Game.cs" />
     <Compile Include="Program.cs" />
@@ -63,7 +65,26 @@
   </ItemGroup>
   <ItemGroup>
     <EmbeddedResource Include="Icon.ico" />
-    <Content Include="Content\main-font_0.png" />
+    <Content Include="Content\base-font_0.png" />
+    <Content Include="Content\img\blue-ball-active.png" />
+    <Content Include="Content\img\blue-ball.png" />
+    <Content Include="Content\img\game-over-message.png" />
+    <Content Include="Content\img\game-screen.png" />
+    <Content Include="Content\img\green-ball-active.png" />
+    <Content Include="Content\img\green-ball.png" />
+    <Content Include="Content\img\light-ball-active.png" />
+    <Content Include="Content\img\light-ball.png" />
+    <Content Include="Content\img\main-menu.png" />
+    <Content Include="Content\img\ok-btn-press.png" />
+    <Content Include="Content\img\ok-btn-hover.png" />
+    <Content Include="Content\img\ok-btn.png" />
+    <Content Include="Content\img\play-btn-press.png" />
+    <Content Include="Content\img\play-btn-hover.png" />
+    <Content Include="Content\img\play-btn.png" />
+    <Content Include="Content\img\red-ball-active.png" />
+    <Content Include="Content\img\red-ball.png" />
+    <Content Include="Content\img\yellow-ball-active.png" />
+    <Content Include="Content\img\yellow-ball.png" />
     <Content Include="OpenTK.dll.config">
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </Content>
@@ -72,9 +93,10 @@
     <MonoGameContentReference Include="Content\Content.mgcb" />
   </ItemGroup>
   <ItemGroup>
-    <None Include="Content\main-font.fnt" />
+    <None Include="Content\base-font.fnt" />
     <None Include="packages.config" />
   </ItemGroup>
+  <ItemGroup />
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
   <Import Project="$(MSBuildExtensionsPath)\MonoGame\v3.0\MonoGame.Content.Builder.targets" />
   <!-- To modify your build process, add your task inside one of the targets below and uncomment it. 
