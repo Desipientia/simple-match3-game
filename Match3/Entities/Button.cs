@@ -9,7 +9,7 @@ namespace Match3.Entities
     {
         Normal,
         Hover,
-        Press
+        Pressed
     }
 
 
@@ -74,16 +74,19 @@ namespace Match3.Entities
             {
                 if (mouseState.LeftButton == ButtonState.Pressed)
                 {
-                    if (_action != null && _state == BState.Hover)
+                    _state = BState.Pressed;
+                }
+                else 
+                {
+                    if (_state == BState.Pressed && _action != null)
                     {
-                        // TODO: Add delay to draw pressed button before the action start.
+                        _state = BState.Normal;
                         _action.Invoke();
                     }
-                    _state = BState.Press;
-                }
-                else
-                {
-                    _state = BState.Hover; 
+                    else
+                    {
+                        _state = BState.Hover;
+                    }
                 }
             }
             else
