@@ -39,8 +39,8 @@ namespace Match3
             gameScreen = new GameScreen(this);
             gameScreen.Initialize();
 
-            mainMenu.gameScreen = gameScreen;
-            gameScreen.mainMenu = mainMenu;
+            mainMenu.CurrentGameScreen = gameScreen;
+            gameScreen.CurrentMainMenu = mainMenu;
 
             base.Initialize();
         }

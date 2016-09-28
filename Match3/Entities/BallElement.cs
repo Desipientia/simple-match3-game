@@ -15,8 +15,9 @@ namespace Match3
 
     class BallElement : DrawableGameComponent
     {
-        public Point gridPosition;
-        public bool isActive = false;
+        public bool IsActive = false;
+        public Point GridPosition;
+        public Vector2 Position;
         public BallColor CurrentColor;
 
         private Texture2D _baseTexture;
@@ -26,12 +27,13 @@ namespace Match3
         public BallElement(BallColor ballColor, Point position, Match3Game game) : base(game)
         {
             CurrentColor = ballColor;
-            gridPosition = position;
+            GridPosition = position;
         }
 
 
         public override void Initialize()
         {
+            Position = new Vector2(0, 0);
             _spriteBatch = new SpriteBatch(Game.GraphicsDevice);
 
             base.Initialize();
@@ -44,7 +46,7 @@ namespace Match3
             string activeTextureName = baseTextureName + "-active";
 
             _baseTexture = Game.Content.Load<Texture2D>(baseTextureName);
-            _activeTexture = Game.Content.Load<Texture2D>(baseTextureName);
+            _activeTexture = Game.Content.Load<Texture2D>(activeTextureName);
 
             base.LoadContent();
         }
@@ -58,12 +60,11 @@ namespace Match3
 
         public override void Draw(GameTime gameTime)
         {
-            int positionX = Constants.GameFieldX + Constants.GameFieldCell * gridPosition.X;
-            int positionY = Constants.GameFieldY + Constants.GameFieldCell * gridPosition.Y;
-            Vector2 position = new Vector2(positionX, positionY);
+            Position.X = Constants.GameFieldX + Constants.GameFieldCell * GridPosition.X;
+            Position.Y = Constants.GameFieldY + Constants.GameFieldCell * GridPosition.Y;
 
             _spriteBatch.Begin();
-            _spriteBatch.Draw(isActive ? _activeTexture : _baseTexture, position, Color.White);
+            _spriteBatch.Draw(IsActive ? _activeTexture : _baseTexture, Position, Color.White);
             _spriteBatch.End();
 
             base.Draw(gameTime);

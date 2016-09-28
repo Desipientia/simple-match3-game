@@ -5,8 +5,8 @@ namespace Match3.Entities
 {
     class MainMenu : DrawableGameComponent
     {
-        public bool isActive = true;
-        public GameScreen gameScreen;
+        public bool IsActive = true;
+        public GameScreen CurrentGameScreen;
 
         private SpriteBatch _spriteBatch;
         private Button _playButton;
@@ -38,7 +38,7 @@ namespace Match3.Entities
 
         public override void Update(GameTime gameTime)
         {
-            if (!isActive) { return; }
+            if (!IsActive) { return; }
 
             _playButton.Update(gameTime);
             base.Update(gameTime);
@@ -47,7 +47,7 @@ namespace Match3.Entities
 
         public override void Draw(GameTime gameTime)
         {
-            if (!isActive) { return; }
+            if (!IsActive) { return; }
 
             _spriteBatch.Begin();
             _spriteBatch.Draw(_mainMenuTexture, new Vector2(0, 0), Color.White);
@@ -62,10 +62,10 @@ namespace Match3.Entities
         // Private methods
         private void playOnClick()
         {
-            if (gameScreen == null) { return; }
+            if (CurrentGameScreen == null) { return; }
 
-            isActive = false;
-            gameScreen.isActive = true;
+            IsActive = false;
+            CurrentGameScreen.IsActive = true;
         }
 
     }
