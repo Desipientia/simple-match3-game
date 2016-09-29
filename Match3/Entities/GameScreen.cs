@@ -67,13 +67,11 @@ namespace Match3.Entities
             if (!_isGameOver)
             {
                 manageGameTime();
+                manageBallVanish();
+
                 if (_currentBallIndex == -1)
                 {
                     manageBallClick();
-                }
-                else
-                {
-                    manageBallVanish();
                 }
             }
             else
@@ -96,15 +94,8 @@ namespace Match3.Entities
 
             _spriteBatch.Begin();
 
-            Tuple<int, int[]> ballChains = findBallChains();
-            string a = ballChains.Item1.ToString();
-            for (int i = 0; i < ballChains.Item1; i++)
-            {
-                ((BallElement)_gameField[ballChains.Item2[i]]).IsActive = true;
-            }
-
             _spriteBatch.Draw(_gameScreenTexture, new Vector2(0, 0), Color.White);
-            _spriteBatch.DrawString(_font, "Score: " + a, new Vector2(Constants.ScoreBoxX, Constants.ScoreBoardY), Color.White);
+            _spriteBatch.DrawString(_font, "Score: " + _score, new Vector2(Constants.ScoreBoxX, Constants.ScoreBoardY), Color.White);
             _spriteBatch.DrawString(_font, "Time: " + _duration, new Vector2(Constants.TimeBoxX, Constants.ScoreBoardY), Color.White);
             _spriteBatch.End();
 
@@ -383,12 +374,94 @@ namespace Match3.Entities
         {
             Tuple<int, int[]> ballChains = findBallChains();
 
-            if (ballChains.Item1 == 0)
+            int length = ballChains.Item1;
+            int[] chainsArray = ballChains.Item2;
+
+            if (_activeBallIndex >= 0 && _currentBallIndex >= 0)
             {
-                swapBalls(((BallElement)_gameField[_activeBallIndex]), ((BallElement)_gameField[_currentBallIndex]));
+                if (length == 0)
+                {
+                    swapBalls(((BallElement)_gameField[_activeBallIndex]), ((BallElement)_gameField[_currentBallIndex]));
+                }
+                _currentBallIndex = -1;
+                _activeBallIndex = -1;
             }
-            _currentBallIndex = -1;
-            _activeBallIndex = -1;
+
+            for (int i = 0; i < length; i++)
+            {
+                _score += 10;
+                ((BallElement)_gameField[chainsArray[i]]).Visible = false;
+            }
+
+            fillEmptyCells();
+        }  
+
+
+        private void fillEmptyCells()
+        {
+            Random rand = new Random();
+
+            for (int i = _gameField.Count - 1; i >= 0; i--)
+            {
+                BallElement ball = (BallElement)_gameField[i];
+
+                if (ball.Visible == true) { continue; }
+
+                int aboveCellIndex = getFromAboveCell(i);
+
+                if (aboveCellIndex != -1)
+                {
+                    BallElement aboveBall = (BallElement)_gameField[aboveCellIndex];
+                    BallElement newBall = new BallElement(aboveBall);
+                    newBall.GridPosition = ball.GridPosition;
+                    newBall.Move();
+                    aboveBall.Visible = false;
+
+                    _gameField.RemoveAt(i);
+                    _gameField.Insert(i, newBall);
+
+                    Debug.WriteLine(aboveBall.Position);
+                    Debug.WriteLine(newBall.Position);
+                }
+                else
+                {
+                    addBall(i, rand);
+                }
+
+            }
+        }
+
+
+        private int getFromAboveCell(int index)
+        {
+            BallElement ball = (BallElement)_gameField[index];
+
+            for (int i = ball.GridPosition.Y - 1; i >= 0; i--)
+            {
+                int aboveBallIndex = i * _width + ball.GridPosition.X;
+
+                if (((BallElement)_gameField[aboveBallIndex]).Visible == true)
+                {
+                    return aboveBallIndex;
+                }
+            }
+
+            return -1;
+        }
+
+
+        private void addBall(int index, Random rand)
+        {
+            BallElement ball = (BallElement)_gameField[index];
+
+            BallElement newBall = new BallElement((BallColor)rand.Next(0, 5), ball.GridPosition, (Match3Game)Game);
+
+            newBall.Initialize();
+            newBall.Position = new Vector2(Constants.GameFieldX + ball.GridPosition.X * Constants.GameFieldCell, Constants.GameFieldY);
+            newBall.Move();
+
+            _gameField.RemoveAt(index);
+            _gameField.Insert(index, newBall);
         }
 
     }

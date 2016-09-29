@@ -18,8 +18,8 @@ namespace Match3
         public bool IsActive = false;
         public Point GridPosition;
         public BallColor CurrentColor;
+        public Vector2 Position;
 
-        private Vector2 _position;
         private Texture2D _baseTexture;
         private Texture2D _activeTexture;
         private SpriteBatch _spriteBatch;
@@ -39,7 +39,7 @@ namespace Match3
             GridPosition = ball.GridPosition;
             CurrentColor = ball.CurrentColor;
 
-            _position = ball._position;
+            Position = ball.Position;
             _baseTexture = ball._baseTexture;
             _activeTexture = ball._activeTexture;
             _spriteBatch = ball._spriteBatch;
@@ -48,7 +48,7 @@ namespace Match3
 
         public override void Initialize()
         {
-            _position = new Vector2(0, 0);
+            Position = new Vector2(0, 0);
             _spriteBatch = new SpriteBatch(Game.GraphicsDevice);
 
             base.Initialize();
@@ -74,17 +74,17 @@ namespace Match3
 
             if (_isMoving)
             {
-                _position += getMoveDirection(endPositionX, endPositionY);
+                Position += getMoveDirection(endPositionX, endPositionY);
 
-                if (_position.X >= endPositionX && _position.Y >= endPositionY)
+                if (Position.X >= endPositionX && Position.Y >= endPositionY)
                 {
                     _isMoving = false;
                 }
             }
             else
             {
-                _position.X = endPositionX;
-                _position.Y = endPositionY;
+                Position.X = endPositionX;
+                Position.Y = endPositionY;
             }
 
             base.Update(gameTime);
@@ -93,8 +93,10 @@ namespace Match3
 
         public override void Draw(GameTime gameTime)
         {
+            if (!Visible) { return; }
+
             _spriteBatch.Begin();
-            _spriteBatch.Draw(IsActive ? _activeTexture : _baseTexture, _position, Color.White);
+            _spriteBatch.Draw(IsActive ? _activeTexture : _baseTexture, Position, Color.White);
             _spriteBatch.End();
 
             base.Draw(gameTime);
@@ -137,9 +139,9 @@ namespace Match3
 
         private Vector2 getMoveDirection(int endX, int endY)
         {
-            float x = endX == _position.X ? 0 : endX > _position.X ? Constants.AnimationVelocity : 
+            float x = endX == Position.X ? 0 : endX > Position.X ? Constants.AnimationVelocity : 
                 -Constants.AnimationVelocity; 
-            float y = endY == _position.Y ? 0 : endY > _position.Y ? Constants.AnimationVelocity :
+            float y = endY == Position.Y ? 0 : endY > Position.Y ? Constants.AnimationVelocity :
                 -Constants.AnimationVelocity;
             
             return new Vector2(x, y);
