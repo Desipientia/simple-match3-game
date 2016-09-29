@@ -5,11 +5,21 @@ namespace Match3
 {
     public enum BallColor
     {
-        red,
-        yellow,
-        green,
-        blue,
-        light
+        Red,
+        Yellow,
+        Green,
+        Blue,
+        Light
+    }
+
+
+    public enum BallState
+    {
+        Visible,
+        Moving,
+        Waiting,
+        Vanishing,
+        Removed
     }
 
 
@@ -20,12 +30,20 @@ namespace Match3
         public BallColor CurrentColor;
         public Vector2 Position;
 
+        public BallState State;
+
+        private BallState _nextState;
+        private GameComponentCollection _waitForBalls;
+
         private Texture2D _baseTexture;
         private Texture2D _activeTexture;
         private SpriteBatch _spriteBatch;
 
-        private bool _isMoving = false;
         private Vector2 _moveDirection;
+
+        private float _scale;
+        private float _scaleVelocity;
+        
 
         public BallElement(BallColor ballColor, Point position, Match3Game game) : base(game)
         {
@@ -49,7 +67,9 @@ namespace Match3
         public override void Initialize()
         {
             Position = new Vector2(0, 0);
+            State = BallState.Visible;
             _spriteBatch = new SpriteBatch(Game.GraphicsDevice);
+            
 
             base.Initialize();
         }
@@ -69,22 +89,46 @@ namespace Match3
 
         public override void Update(GameTime gameTime)
         {
+            if (State == BallState.Removed) { return; }
+
+            if (State == BallState.Waiting)
+            {
+                foreach (BallElement ball in _waitForBalls)
+                {
+                    if (ball.State == BallState.Moving || ball.State == BallState.Vanishing)
+                    {
+                        return;
+                    }
+                }
+                State = _nextState;
+            }
+
             int endPositionX = Constants.GameFieldX + Constants.GameFieldCell * GridPosition.X;
             int endPositionY = Constants.GameFieldY + Constants.GameFieldCell * GridPosition.Y;
 
-            if (_isMoving)
+            if (State == BallState.Moving)
             {
                 Position += getMoveDirection(endPositionX, endPositionY);
 
                 if (Position.X >= endPositionX && Position.Y >= endPositionY)
                 {
-                    _isMoving = false;
+                    State = BallState.Visible;
                 }
             }
             else
             {
                 Position.X = endPositionX;
                 Position.Y = endPositionY;
+
+                if (State == BallState.Vanishing)
+                {
+                    _scale -= _scaleVelocity;
+
+                    if (_scale <= 0)
+                    {
+                        State = BallState.Removed;
+                    }
+                }
             }
 
             base.Update(gameTime);
@@ -93,19 +137,38 @@ namespace Match3
 
         public override void Draw(GameTime gameTime)
         {
-            if (!Visible) { return; }
+            if (State == BallState.Waiting || State == BallState.Removed) { return; }
 
-            _spriteBatch.Begin();
-            _spriteBatch.Draw(IsActive ? _activeTexture : _baseTexture, Position, Color.White);
-            _spriteBatch.End();
+            if (State == BallState.Visible || State == BallState.Moving)
+            {
+                _spriteBatch.Begin();
+                _spriteBatch.Draw(IsActive ? _activeTexture : _baseTexture, Position, Color.White);
+                _spriteBatch.End();
+            }
+            else
+            {
+                _spriteBatch.Begin();
+                _spriteBatch.Draw(_baseTexture, Position, null, Color.White, 0f, new Vector2(0,0), _scale, SpriteEffects.None, 0f);
+                _spriteBatch.End();
+            }
 
             base.Draw(gameTime);
         }
 
 
-        public void Move()
+        public void Wait(GameComponentCollection forWhat, BallState nextState)
         {
-            _isMoving = true; 
+            State = BallState.Waiting;
+            _nextState = nextState;
+            _waitForBalls = forWhat;
+        }
+
+
+        public void Vanish()
+        {
+            State = BallState.Vanishing;
+            _scale = .8f;
+            _scaleVelocity = .05f;
         }
 
 
@@ -116,19 +179,19 @@ namespace Match3
 
             switch (CurrentColor)
             {
-                case BallColor.red:
+                case BallColor.Red:
                     textureName += "red";
                     break;
-                case BallColor.yellow:
+                case BallColor.Yellow:
                     textureName += "yellow";
                     break;
-                case BallColor.green:
+                case BallColor.Green:
                     textureName += "green";
                     break;
-                case BallColor.blue:
+                case BallColor.Blue:
                     textureName += "blue";
                     break;
-                case BallColor.light:
+                case BallColor.Light:
                     textureName += "light";
                     break;
                 default:

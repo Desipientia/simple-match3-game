@@ -5,7 +5,7 @@ using Microsoft.Xna.Framework.Graphics;
 using Microsoft.Xna.Framework.Input;
 using MonoGame.Extended.BitmapFonts;
 
-namespace Match3.Entities
+namespace Match3.Entities 
 {
     class GameScreen : DrawableGameComponent
     {
@@ -30,6 +30,9 @@ namespace Match3.Entities
         private Rectangle _fieldBoundingBox;
         private GameComponentCollection _gameField;
         private ButtonState _previousLeftButtonState = ButtonState.Pressed;
+
+        private GameComponentCollection _vanishingBalls;
+
 
         public GameScreen(Match3Game game) : base(game) { }
 
@@ -295,8 +298,9 @@ namespace Match3.Entities
 
             newFirstBall.GridPosition = firstBall.GridPosition;
             newSecondBall.GridPosition = secondBall.GridPosition;
-            newFirstBall.Move();
-            newSecondBall.Move();
+            newFirstBall.State = BallState.Moving;
+            ;
+            newSecondBall.State = BallState.Moving;
 
             _gameField.RemoveAt(firstBallIndex);
             _gameField.Insert(firstBallIndex, newFirstBall);
@@ -387,13 +391,24 @@ namespace Match3.Entities
                 _activeBallIndex = -1;
             }
 
+            _vanishingBalls = new GameComponentCollection();
+
             for (int i = 0; i < length; i++)
             {
+                BallElement ball = (BallElement)_gameField[chainsArray[i]];
+
+                if (ball.State == BallState.Vanishing || ball.State == BallState.Removed) { continue; }
+                
+                ball.Vanish();
+                _vanishingBalls.Add(ball);
                 _score += 10;
-                ((BallElement)_gameField[chainsArray[i]]).Visible = false;
             }
 
-            fillEmptyCells();
+            if (length > 0)
+            {
+                fillEmptyCells();
+                _vanishingBalls = null;
+            }
         }  
 
 
@@ -405,7 +420,7 @@ namespace Match3.Entities
             {
                 BallElement ball = (BallElement)_gameField[i];
 
-                if (ball.Visible == true) { continue; }
+                if (ball.State != BallState.Removed) { continue; }
 
                 int aboveCellIndex = getFromAboveCell(i);
 
@@ -414,14 +429,11 @@ namespace Match3.Entities
                     BallElement aboveBall = (BallElement)_gameField[aboveCellIndex];
                     BallElement newBall = new BallElement(aboveBall);
                     newBall.GridPosition = ball.GridPosition;
-                    newBall.Move();
-                    aboveBall.Visible = false;
+                    newBall.Wait(_vanishingBalls, BallState.Moving);
+                    aboveBall.State = BallState.Removed;
 
                     _gameField.RemoveAt(i);
                     _gameField.Insert(i, newBall);
-
-                    Debug.WriteLine(aboveBall.Position);
-                    Debug.WriteLine(newBall.Position);
                 }
                 else
                 {
@@ -440,7 +452,7 @@ namespace Match3.Entities
             {
                 int aboveBallIndex = i * _width + ball.GridPosition.X;
 
-                if (((BallElement)_gameField[aboveBallIndex]).Visible == true)
+                if (((BallElement)_gameField[aboveBallIndex]).State == BallState.Visible)
                 {
                     return aboveBallIndex;
                 }
@@ -458,7 +470,7 @@ namespace Match3.Entities
 
             newBall.Initialize();
             newBall.Position = new Vector2(Constants.GameFieldX + ball.GridPosition.X * Constants.GameFieldCell, Constants.GameFieldY);
-            newBall.Move();
+            newBall.Wait(_vanishingBalls, BallState.Moving);
 
             _gameField.RemoveAt(index);
             _gameField.Insert(index, newBall);
