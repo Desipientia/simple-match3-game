@@ -17,6 +17,8 @@ namespace Match3.Entities
         private int _score;
         private int _duration;
         private bool _isGameOver = false;
+        private int _activeBallIndex = -1;
+        private int _currentBallIndex = -1;
 
         private BitmapFont _font;
         private SpriteBatch _spriteBatch;
@@ -28,7 +30,6 @@ namespace Match3.Entities
         private Rectangle _fieldBoundingBox;
         private GameComponentCollection _gameField;
         private ButtonState _previousLeftButtonState = ButtonState.Pressed;
-        private BallElement _activeBall;// = null;
 
         public GameScreen(Match3Game game) : base(game) { }
 
@@ -44,13 +45,6 @@ namespace Match3.Entities
 
             _okButton = new Button(okButtonTexturePack, okButtonBox, gameOverClick, (Match3Game)Game);
             _okButton.Initialize();
-
-            generateGameField();
-
-            foreach (BallElement ball in _gameField)
-            {
-                ball.Initialize();
-            }
 
             base.Initialize();
         }
@@ -73,7 +67,14 @@ namespace Match3.Entities
             if (!_isGameOver)
             {
                 manageGameTime();
-                manageBallClick();
+                if (_currentBallIndex == -1)
+                {
+                    manageBallClick();
+                }
+                else
+                {
+                    manageBallVanish();
+                }
             }
             else
             {
@@ -95,8 +96,15 @@ namespace Match3.Entities
 
             _spriteBatch.Begin();
 
+            Tuple<int, int[]> ballChains = findBallChains();
+            string a = ballChains.Item1.ToString();
+            for (int i = 0; i < ballChains.Item1; i++)
+            {
+                ((BallElement)_gameField[ballChains.Item2[i]]).IsActive = true;
+            }
+
             _spriteBatch.Draw(_gameScreenTexture, new Vector2(0, 0), Color.White);
-            _spriteBatch.DrawString(_font, "Score: " + _score, new Vector2(Constants.ScoreBoxX, Constants.ScoreBoardY), Color.White);
+            _spriteBatch.DrawString(_font, "Score: " + a, new Vector2(Constants.ScoreBoxX, Constants.ScoreBoardY), Color.White);
             _spriteBatch.DrawString(_font, "Time: " + _duration, new Vector2(Constants.TimeBoxX, Constants.ScoreBoardY), Color.White);
             _spriteBatch.End();
 
@@ -133,6 +141,13 @@ namespace Match3.Entities
             }
             else
             {
+                generateGameField();
+
+                foreach (BallElement ball in _gameField)
+                {
+                    ball.Initialize();
+                }
+
                 _duration = Constants.GameDuration;
                 _score = 0;
                 _stopwatch.Start();
@@ -172,7 +187,7 @@ namespace Match3.Entities
                         {
                             isColorSutable &= !ballsAtLeftFormChain(x, y, color);
                         }
-                        if (y > 2)
+                        if (y >= 2)
                         {
                             isColorSutable &= !ballsAtTopFormChain(x, y, color);
                         }
@@ -223,26 +238,27 @@ namespace Match3.Entities
                 if (mouseState.LeftButton == ButtonState.Pressed &&
                     _previousLeftButtonState == ButtonState.Released)
                 {
-                    if (_activeBall == null)
+                    if (_activeBallIndex == -1)
                     {
                         BallElement ball = getSelectedBall(mouseState);
 
                         ball.IsActive = true;
-                        _activeBall = ball;
+                        _activeBallIndex = getBallCollectionIndex(ball);
                         _previousLeftButtonState = ButtonState.Pressed;
                     }
                     else
                     {
                         BallElement currentBall = getSelectedBall(mouseState);
+                        BallElement activeBall = ((BallElement)_gameField[_activeBallIndex]);
 
-                        _activeBall.IsActive = false;
+                        activeBall.IsActive = false;
 
-                        if (areNeighbours(currentBall.GridPosition, _activeBall.GridPosition))
+                        if (areNeighbours(currentBall.GridPosition, activeBall.GridPosition))
                         {
-                            swapBalls(currentBall, _activeBall);
+                            _currentBallIndex = getBallCollectionIndex(currentBall);
+                            swapBalls(currentBall, activeBall);
                         }
 
-                        _activeBall = null;
                         _previousLeftButtonState = ButtonState.Pressed;
                     }
                 }
@@ -281,8 +297,8 @@ namespace Match3.Entities
 
         private void swapBalls(BallElement firstBall, BallElement secondBall)
         {
-            int firstBallIndex = firstBall.GridPosition.Y * _width + firstBall.GridPosition.X;
-            int secondBallIndex = secondBall.GridPosition.Y * _width + secondBall.GridPosition.X;
+            int firstBallIndex = getBallCollectionIndex(firstBall);
+            int secondBallIndex = getBallCollectionIndex(secondBall);
             BallElement newFirstBall = new BallElement(secondBall);
             BallElement newSecondBall = new BallElement(firstBall);
 
@@ -295,6 +311,84 @@ namespace Match3.Entities
             _gameField.Insert(firstBallIndex, newFirstBall);
             _gameField.RemoveAt(secondBallIndex);
             _gameField.Insert(secondBallIndex, newSecondBall);
+        }
+
+
+        private int getBallCollectionIndex(BallElement ball)
+        {
+            return ball.GridPosition.Y * _width + ball.GridPosition.X;
+        }
+
+
+        private Tuple<int, int[]> findBallChains()
+        {
+            const int n = 32;
+            int currentIndex = 0;
+            int[] chainsArray = new int[n];
+
+            foreach (BallElement ball in _gameField)
+            {
+                int ballIndex = getBallCollectionIndex(ball);
+                
+                if (Array.IndexOf(chainsArray, ballIndex) == -1 || ballIndex == 0)
+                {
+                    int tempIndex = currentIndex;
+
+                    chainsArray[currentIndex++] = ballIndex;
+                    currentIndex = addBallChain(ball, currentIndex, ballIndex, chainsArray, "hor");
+                    currentIndex = addBallChain(ball, currentIndex, ballIndex, chainsArray, "vert");
+
+                    if (currentIndex - tempIndex < 3)
+                    {
+                        currentIndex = tempIndex;
+                    }
+                }
+            }
+
+            return new Tuple<int, int[]>(currentIndex, chainsArray);
+        }
+
+
+        private int addBallChain(BallElement ball, int currentIndex, int ballIndex, int[] chainsArray, string direction)
+        {
+            int i;
+            int x = ball.GridPosition.X;
+            int y = ball.GridPosition.Y;
+            int n = direction == "vert" ? _height - y : _width - x;
+
+            for (i = 1; i < n; i++)
+            {
+                int index = direction == "vert" ? (y + i) * _height + x : y * _height + x + i;
+
+                if (ball.CurrentColor == ((BallElement)_gameField[index]).CurrentColor)
+                {
+                    chainsArray[currentIndex++] = index;
+                }
+                else
+                {
+                    break;
+                }
+            }
+
+            if (i < 3)
+            {
+                currentIndex -= i - 1;
+            }
+
+            return currentIndex;
+        }
+
+
+        private void manageBallVanish()
+        {
+            Tuple<int, int[]> ballChains = findBallChains();
+
+            if (ballChains.Item1 == 0)
+            {
+                swapBalls(((BallElement)_gameField[_activeBallIndex]), ((BallElement)_gameField[_currentBallIndex]));
+            }
+            _currentBallIndex = -1;
+            _activeBallIndex = -1;
         }
 
     }
