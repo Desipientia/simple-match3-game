@@ -95,10 +95,7 @@ namespace Match3
             {
                 foreach (BallElement ball in _waitForBalls)
                 {
-                    if (ball.State == BallState.Moving || ball.State == BallState.Vanishing)
-                    {
-                        return;
-                    }
+                    if (ball.State == BallState.Moving || ball.State == BallState.Vanishing) { return; }
                 }
                 State = _nextState;
             }

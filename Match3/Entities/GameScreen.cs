@@ -153,6 +153,8 @@ namespace Match3.Entities
         {
             if (CurrentMainMenu == null) { return; }
 
+            _activeBallIndex = -1;
+            _currentBallIndex = -1;
             _isGameOver = false;
             IsActive = false;
             CurrentMainMenu.IsActive = true;
@@ -252,6 +254,10 @@ namespace Match3.Entities
                             _currentBallIndex = getBallCollectionIndex(currentBall);
                             swapBalls(currentBall, activeBall);
                         }
+                        else
+                        {
+                            _activeBallIndex = -1;
+                        }
 
                         _previousLeftButtonState = ButtonState.Pressed;
                     }
@@ -325,19 +331,8 @@ namespace Match3.Entities
             {
                 int ballIndex = getBallCollectionIndex(ball);
                 
-                if (Array.IndexOf(chainsArray, ballIndex) == -1 || ballIndex == 0)
-                {
-                    int tempIndex = currentIndex;
-
-                    chainsArray[currentIndex++] = ballIndex;
-                    currentIndex = addBallChain(ball, currentIndex, ballIndex, chainsArray, "hor");
-                    currentIndex = addBallChain(ball, currentIndex, ballIndex, chainsArray, "vert");
-
-                    if (currentIndex - tempIndex < 3)
-                    {
-                        currentIndex = tempIndex;
-                    }
-                }
+                currentIndex = addBallChain(ball, currentIndex, ballIndex, chainsArray, "horisontal");
+                currentIndex = addBallChain(ball, currentIndex, ballIndex, chainsArray, "vertical");
             }
 
             return new Tuple<int, int[]>(currentIndex, chainsArray);
@@ -349,15 +344,17 @@ namespace Match3.Entities
             int i;
             int x = ball.GridPosition.X;
             int y = ball.GridPosition.Y;
-            int n = direction == "vert" ? _height - y : _width - x;
+            int n = direction == "vertical" ? _height - y : _width - x;
+
+            int[] tempArray = new int[n - 1];
 
             for (i = 1; i < n; i++)
             {
-                int index = direction == "vert" ? (y + i) * _height + x : y * _height + x + i;
+                int index = direction == "vertical" ? (y + i) * _height + x : y * _height + x + i;
 
                 if (ball.CurrentColor == ((BallElement)_gameField[index]).CurrentColor)
                 {
-                    chainsArray[currentIndex++] = index;
+                    tempArray[i - 1] = index;
                 }
                 else
                 {
@@ -365,9 +362,28 @@ namespace Match3.Entities
                 }
             }
 
-            if (i < 3)
+            if (i >= 3)
             {
-                currentIndex -= i - 1;
+                Array.Copy(tempArray, 0, chainsArray, currentIndex, i - 1);
+                currentIndex += i - 1;
+
+                if (Array.IndexOf(chainsArray, ballIndex) == -1)
+                {
+                    chainsArray[currentIndex++] = ballIndex;
+                }
+
+                if (i == 4)
+                {
+                    int lineIndex = 0; // State New
+
+                    addLine(lineIndex);
+                }
+                else if (i >= 5)
+                {
+                    int bombIndex = 0;
+
+                    addBomb(bombIndex);
+                }
             }
 
             return currentIndex;
@@ -474,6 +490,18 @@ namespace Match3.Entities
 
             _gameField.RemoveAt(index);
             _gameField.Insert(index, newBall);
+        }
+
+
+        private void addLine(int index)
+        {
+
+        }
+
+
+        private void addBomb(int index)
+        {
+
         }
 
     }
