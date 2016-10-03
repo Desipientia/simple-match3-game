@@ -70,12 +70,13 @@ namespace Match3.Entities
             if (!_isGameOver)
             {
                 manageGameTime();
-                manageBallVanish();
 
                 if (_currentBallIndex == -1)
                 {
                     manageBallClick();
                 }
+
+                manageBallVanish();
             }
             else
             {
@@ -252,6 +253,8 @@ namespace Match3.Entities
                         if (areNeighbours(currentBall.GridPosition, activeBall.GridPosition))
                         {
                             _currentBallIndex = getBallCollectionIndex(currentBall);
+                            activeBall.IsNew = true;
+                            currentBall.IsNew = true;
                             swapBalls(currentBall, activeBall);
                         }
                         else
@@ -305,7 +308,6 @@ namespace Match3.Entities
             newFirstBall.GridPosition = firstBall.GridPosition;
             newSecondBall.GridPosition = secondBall.GridPosition;
             newFirstBall.State = BallState.Moving;
-            ;
             newSecondBall.State = BallState.Moving;
 
             _gameField.RemoveAt(firstBallIndex);
@@ -330,9 +332,9 @@ namespace Match3.Entities
             foreach (BallElement ball in _gameField)
             {
                 int ballIndex = getBallCollectionIndex(ball);
-                
+                   
                 currentIndex = addBallChain(ball, currentIndex, ballIndex, chainsArray, "horisontal");
-                currentIndex = addBallChain(ball, currentIndex, ballIndex, chainsArray, "vertical");
+                currentIndex = addBallChain(ball, currentIndex, ballIndex, chainsArray, "vertical"); 
             }
 
             return new Tuple<int, int[]>(currentIndex, chainsArray);
@@ -372,17 +374,20 @@ namespace Match3.Entities
                     chainsArray[currentIndex++] = ballIndex;
                 }
 
-                if (i == 4)
-                {
-                    int lineIndex = 0; // State New
+                if (ball.State != BallState.Vanishing && ball.State != BallState.Removed)
+                { 
+                    if (i == 4)
+                    {
+                        int lineIndex = getLastMovedBallIndex(tempArray, i - 1, ballIndex);
+                        BonusType lineType = direction == "vertical" ? BonusType.VerticalLine : BonusType.HorisontalLine;
+                        ((BallElement)_gameField[lineIndex]).whatBonusNext = lineType;
+                    }
+                    else if (i >= 5)
+                    {
+                        int bombIndex = getLastMovedBallIndex(tempArray, i - 1, ballIndex);
 
-                    addLine(lineIndex);
-                }
-                else if (i >= 5)
-                {
-                    int bombIndex = 0;
-
-                    addBomb(bombIndex);
+                        ((BallElement)_gameField[bombIndex]).whatBonusNext = BonusType.Bomb;
+                    }
                 }
             }
 
@@ -413,11 +418,12 @@ namespace Match3.Entities
             {
                 BallElement ball = (BallElement)_gameField[chainsArray[i]];
 
-                if (ball.State == BallState.Vanishing || ball.State == BallState.Removed) { continue; }
-                
-                ball.Vanish();
-                _vanishingBalls.Add(ball);
-                _score += 10;
+                if (!(ball.State == BallState.Vanishing || ball.State == BallState.Removed))
+                {
+                    ball.Vanish();
+                    _vanishingBalls.Add(ball);
+                    _score += 10;
+                }
             }
 
             if (length > 0)
@@ -430,17 +436,16 @@ namespace Match3.Entities
 
         private void fillEmptyCells()
         {
+            int aboveCellIndex;
             Random rand = new Random();
 
             for (int i = _gameField.Count - 1; i >= 0; i--)
             {
                 BallElement ball = (BallElement)_gameField[i];
-
+       
                 if (ball.State != BallState.Removed) { continue; }
 
-                int aboveCellIndex = getFromAboveCell(i);
-
-                if (aboveCellIndex != -1)
+                if (ball.whatBonusNext == BonusType.None && (aboveCellIndex = getFromAboveCell(i)) != -1)
                 {
                     BallElement aboveBall = (BallElement)_gameField[aboveCellIndex];
                     BallElement newBall = new BallElement(aboveBall);
@@ -455,12 +460,11 @@ namespace Match3.Entities
                 {
                     addBall(i, rand);
                 }
-
             }
         }
 
 
-        private int getFromAboveCell(int index)
+        private int getFromAboveCell(int index) 
         {
             BallElement ball = (BallElement)_gameField[index];
 
@@ -468,7 +472,7 @@ namespace Match3.Entities
             {
                 int aboveBallIndex = i * _width + ball.GridPosition.X;
 
-                if (((BallElement)_gameField[aboveBallIndex]).State == BallState.Visible)
+                if (((BallElement)_gameField[aboveBallIndex]).State == BallState.Normal)
                 {
                     return aboveBallIndex;
                 }
@@ -481,11 +485,28 @@ namespace Match3.Entities
         private void addBall(int index, Random rand)
         {
             BallElement ball = (BallElement)_gameField[index];
+            BallElement newBall = null;
+            Vector2 position = ball.Position;
 
-            BallElement newBall = new BallElement((BallColor)rand.Next(0, 5), ball.GridPosition, (Match3Game)Game);
+            switch (ball.whatBonusNext)
+            {
+                case BonusType.None:
+                    newBall = new BallElement((BallColor)rand.Next(0, 5), ball.GridPosition, (Match3Game)Game);
+                    position = new Vector2(Constants.GameFieldX + ball.GridPosition.X * Constants.GameFieldCell, Constants.GameFieldY);
+                    break;
+                case BonusType.VerticalLine:
+                case BonusType.HorisontalLine:
+                    newBall = new LineElement(ball);
+                    break;
+                case BonusType.Bomb:
+                    newBall = new BombElement(ball);
+                    break;
+                default:
+                    break;
+            }
 
             newBall.Initialize();
-            newBall.Position = new Vector2(Constants.GameFieldX + ball.GridPosition.X * Constants.GameFieldCell, Constants.GameFieldY);
+            newBall.Position = position;
             newBall.Wait(_vanishingBalls, BallState.Moving);
 
             _gameField.RemoveAt(index);
@@ -493,15 +514,17 @@ namespace Match3.Entities
         }
 
 
-        private void addLine(int index)
+        private int getLastMovedBallIndex(int[] balls, int n, int currentballIndex)
         {
+            for (int i = 0; i < n; i++)
+            {
+                if (((BallElement)_gameField[balls[i]]).IsNew)
+                {
+                    return balls[i];
+                }
+            }
 
-        }
-
-
-        private void addBomb(int index)
-        {
-
+            return currentballIndex;
         }
 
     }
