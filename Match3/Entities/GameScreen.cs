@@ -390,7 +390,13 @@ namespace Match3.Entities
                         int lineIndex = getLastMovedBallIndex(tempArray, i - 1, ballIndex);
                         BonusType lineType = direction == "vertical" ? BonusType.VerticalLine : BonusType.HorisontalLine;
 
-                        ((BallElement)_gameField[lineIndex]).whatBonusNext = lineType;
+                        BallElement ballToChange = ((BallElement)_gameField[lineIndex]);
+
+                        // TODO: Find out, why line overrides bomb without if. 
+                        if (ballToChange.whatBonusNext == BonusType.None)
+                        {
+                            ballToChange.whatBonusNext = lineType;
+                        }
                     }
                     else if (i >= 5)
                     {
