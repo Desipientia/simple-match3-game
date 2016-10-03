@@ -35,6 +35,7 @@ namespace Match3.Entities
         private GameComponentCollection _vanishingBalls;
         private GameComponentCollection _movingBalls;
         private GameComponentCollection _destroyers;
+        private GameComponentCollection _blasts;
 
         public GameScreen(Match3Game game) : base(game) { }
 
@@ -48,6 +49,7 @@ namespace Match3.Entities
             _stopwatch = new Stopwatch();
             _fieldBoundingBox = new Rectangle(Constants.GameFieldX, Constants.GameFieldY, Constants.GameFieldCell * _width, Constants.GameFieldCell * _height);
             _destroyers = new GameComponentCollection();
+            _blasts = new GameComponentCollection();
 
             _okButton = new Button(okButtonTexturePack, okButtonBox, gameOverClick, (Match3Game)Game);
             _okButton.Initialize();
@@ -91,7 +93,9 @@ namespace Match3.Entities
                 ball.Update(gameTime);
             }
 
-            updateDestroyers(gameTime);
+            updateAndRemoveGameElements(_destroyers, gameTime);
+            updateAndRemoveGameElements(_blasts, gameTime);
+
             base.Update(gameTime);
         }
 
@@ -101,7 +105,6 @@ namespace Match3.Entities
             if (!IsActive) { return; }
 
             _spriteBatch.Begin();
-
             _spriteBatch.Draw(_gameScreenTexture, new Vector2(0, 0), Color.White);
             _spriteBatch.DrawString(_font, "Score: " + _score, new Vector2(Constants.ScoreBoxX, Constants.ScoreBoardY), Color.White);
             _spriteBatch.DrawString(_font, "Time: " + _duration, new Vector2(Constants.TimeBoxX, Constants.ScoreBoardY), Color.White);
@@ -112,9 +115,14 @@ namespace Match3.Entities
                 ball.Draw(gameTime);
             }
 
-            foreach (Destroyer destroyer in _destroyers)
+            foreach (DestroyerElement destroyer in _destroyers)
             {
                 destroyer.Draw(gameTime);
+            }
+
+            foreach (BlastElement blast in _blasts)
+            {
+                blast.Draw(gameTime);
             }
 
             if (_isGameOver)
@@ -569,8 +577,8 @@ namespace Match3.Entities
             position.Y = Constants.GameFieldY + Constants.GameFieldCell * line.GridPosition.Y + Constants.GameFieldCell / 2;
 
             Tuple<Direction, Direction> direction = line.GetDestroyersDirection();
-            Destroyer firstDestroyer = new Destroyer(direction.Item1, position, line.CurrentColor, width, height, (Match3Game)Game);
-            Destroyer secondDestroyer = new Destroyer(direction.Item2, position, line.CurrentColor, width, height, (Match3Game)Game);
+            DestroyerElement firstDestroyer = new DestroyerElement(direction.Item1, position, line.CurrentColor, width, height, (Match3Game)Game);
+            DestroyerElement secondDestroyer = new DestroyerElement(direction.Item2, position, line.CurrentColor, width, height, (Match3Game)Game);
 
             firstDestroyer.Initialize();
             secondDestroyer.Initialize();
@@ -584,7 +592,7 @@ namespace Match3.Entities
         {
             for (int i = 0; i < _destroyers.Count; i++)
             {
-                Destroyer destroyer = (Destroyer)_destroyers[i];
+                DestroyerElement destroyer = (DestroyerElement)_destroyers[i];
 
                 int x = ((int)destroyer.Position.X - Constants.GameFieldX) / Constants.GameFieldCell;
                 int y = ((int)destroyer.Position.Y - Constants.GameFieldY) / Constants.GameFieldCell;
@@ -597,28 +605,6 @@ namespace Match3.Entities
         }
 
 
-        private void updateDestroyers(GameTime gameTime)
-        {
-            List<Destroyer> toRemove = new List<Destroyer>();
-
-            foreach (Destroyer destroyer in _destroyers)
-            {
-                destroyer.Update(gameTime);
-
-                if (destroyer.State == ElementState.Removed)
-                {
-                    toRemove.Add(destroyer);
-                    continue;
-                }
-            }
-
-            foreach (Destroyer destroyer in toRemove)
-            {
-                _destroyers.Remove(destroyer);
-            }
-        }
-
-
         private void destroyBall(BallElement ball)
         {
             if (!(ball.State == ElementState.Vanishing || ball.State == ElementState.Removed))
@@ -627,6 +613,9 @@ namespace Match3.Entities
                 {
                     createDestroyers((LineElement)ball);
                 }
+                else if (ball.GetType().Equals(typeof(BombElement))) {
+                    createBlast((BombElement)ball);
+                }
 
                 ball.Vanish();
                 _vanishingBalls.Add(ball);
@@ -634,5 +623,57 @@ namespace Match3.Entities
             }
         }
 
+
+        private void createBlast(BombElement bomb)
+        {
+            int width = _width * Constants.GameFieldCell;
+            int height = _height * Constants.GameFieldCell;
+
+            Vector2 position = new Vector2(0, 0);
+
+            position.X = Constants.GameFieldX + Constants.GameFieldCell * (bomb.GridPosition.X) + Constants.GameFieldCell / 2;
+            position.Y = Constants.GameFieldY + Constants.GameFieldCell * (bomb.GridPosition.Y) + Constants.GameFieldCell / 2;
+
+            BlastElement blast = new BlastElement(position, (Match3Game)Game);
+
+            blast.Initialize();
+
+            _blasts.Add(blast);
+
+            int x = ((int)position.X - Constants.GameFieldX) / Constants.GameFieldCell;
+            int y = ((int)position.Y - Constants.GameFieldY) / Constants.GameFieldCell;
+            int startIndex = y * _width + x;
+            int bombIndex = bomb.GridPosition.Y * _width + bomb.GridPosition.X;
+
+            for (int i = startIndex; i < startIndex + Constants.BlastWidth * Constants.BlastHeight; i++)
+            {
+                if (i != bombIndex && i >= 0 && i < _gameField.Count)
+                {
+                    destroyBall((BallElement)_gameField[i]);
+                }
+            }
+        }
+
+
+        private void updateAndRemoveGameElements(GameComponentCollection collection, GameTime gameTime)
+        {
+            List<Match3GameElement> toRemove = new List<Match3GameElement>();
+
+            foreach (Match3GameElement element in collection)
+            {
+                element.Update(gameTime);
+
+                if (element.State == ElementState.Removed)
+                {
+                    toRemove.Add(element);
+                    continue;
+                }
+            }
+
+            foreach (Match3GameElement element in toRemove)
+            {
+                collection.Remove(element);
+            }
+        }
     }
 }

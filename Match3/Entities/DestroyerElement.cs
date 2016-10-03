@@ -12,7 +12,7 @@ namespace Match3.Entities
         Left
     }
 
-    class Destroyer : Match3GameElement
+    class DestroyerElement : Match3GameElement
     {
         private Direction _direction;
         private Vector2 _velocity;
@@ -21,7 +21,7 @@ namespace Match3.Entities
         private int _fieldWidth;
         private int _fieldHeight;
 
-        public Destroyer(Direction direction, Vector2 position, ElementColor color, int fieldWidth, int fieldHeight, Match3Game game) : base(game)
+        public DestroyerElement(Direction direction, Vector2 position, ElementColor color, int fieldWidth, int fieldHeight, Match3Game game) : base(game)
         {
             CurrentColor = color;
             Position = position;

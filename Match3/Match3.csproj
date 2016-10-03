@@ -60,9 +60,10 @@
   <ItemGroup>
     <Compile Include="Entities\BallElement.cs" />
     <Compile Include="Constants.cs" />
+    <Compile Include="Entities\BlastElement.cs" />
     <Compile Include="Entities\BombElement.cs" />
     <Compile Include="Entities\Button.cs" />
-    <Compile Include="Entities\Destroyer.cs" />
+    <Compile Include="Entities\DestroyerElement.cs" />
     <Compile Include="Entities\GameScreen.cs" />
     <Compile Include="Entities\MainMenu.cs" />
     <Compile Include="Entities\LineElement.cs" />
@@ -98,7 +99,7 @@
     <Content Include="Content\img\blue-destroyer.png" />
     <Content Include="Content\img\blue-line-active.png" />
     <Content Include="Content\img\blue-line.png" />
-    <Content Include="Content\img\boom.png" />
+    <Content Include="Content\img\blast.png" />
     <Content Include="Content\img\game-over-message.png" />
     <Content Include="Content\img\game-screen.png" />
     <Content Include="Content\img\green-ball-active.png" />

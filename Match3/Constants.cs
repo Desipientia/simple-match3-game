@@ -43,5 +43,8 @@ namespace Match3
         public const string OkButtonTexture = "img/ok-btn";
         public const string OkButtonHoverTexture = "img/ok-btn-hover";
         public const string OkButtonPressTexture = "img/ok-btn-press";
+
+        public const int BlastWidth = 3;
+        public const int BlastHeight = 3;
     }
 }
