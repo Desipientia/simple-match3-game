@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Diagnostics;
+using System.Collections.Generic;
 using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Graphics;
 using Microsoft.Xna.Framework.Input;
@@ -32,6 +33,7 @@ namespace Match3.Entities
         private ButtonState _previousLeftButtonState = ButtonState.Pressed;
 
         private GameComponentCollection _vanishingBalls;
+        private GameComponentCollection _movingBalls;
         private GameComponentCollection _destroyers;
 
         public GameScreen(Match3Game game) : base(game) { }
@@ -89,17 +91,7 @@ namespace Match3.Entities
                 ball.Update(gameTime);
             }
 
-            foreach (Destroyer destroyer in _destroyers)
-            {
-                if (destroyer.State == ElementState.Removed)
-                {
-                    // TODO: Remove destroyer.
-                    continue;
-                }
-
-                destroyer.Update(gameTime);
-            }
-
+            updateDestroyers(gameTime);
             base.Update(gameTime);
         }
 
@@ -397,6 +389,7 @@ namespace Match3.Entities
                     {
                         int lineIndex = getLastMovedBallIndex(tempArray, i - 1, ballIndex);
                         BonusType lineType = direction == "vertical" ? BonusType.VerticalLine : BonusType.HorisontalLine;
+
                         ((BallElement)_gameField[lineIndex]).whatBonusNext = lineType;
                     }
                     else if (i >= 5)
@@ -433,26 +426,13 @@ namespace Match3.Entities
 
             for (int i = 0; i < length; i++)
             {
-                BallElement ball = (BallElement)_gameField[chainsArray[i]];
-
-                if (!(ball.State == ElementState.Vanishing || ball.State == ElementState.Removed))
-                {
-                    if (ball.GetType().Equals(typeof(LineElement)))
-                    {
-                        createDestroyers((LineElement)ball);
-                    }
-
-                    ball.Vanish();
-                    _vanishingBalls.Add(ball);
-                    _score += 10;
-                }
+                destroyBall((BallElement)_gameField[chainsArray[i]]);
             }
 
-            if (length > 0)
-            {
-                fillEmptyCells();
-                _vanishingBalls = null;
-            }
+            manageDestroyersInterception();
+
+            fillEmptyCells();
+            _vanishingBalls = null;
         }  
 
 
@@ -460,6 +440,8 @@ namespace Match3.Entities
         {
             int aboveCellIndex;
             Random rand = new Random();
+
+            _movingBalls = new GameComponentCollection();
 
             for (int i = _gameField.Count - 1; i >= 0; i--)
             {
@@ -475,6 +457,7 @@ namespace Match3.Entities
                     newBall.Wait(_vanishingBalls, ElementState.Moving);
                     aboveBall.State = ElementState.Removed;
 
+                    _movingBalls.Add(newBall);
                     _gameField.RemoveAt(i);
                     _gameField.Insert(i, newBall);
                 }
@@ -509,6 +492,7 @@ namespace Match3.Entities
             BallElement ball = (BallElement)_gameField[index];
             BallElement newBall = null;
             Vector2 position = ball.Position;
+            GameComponentCollection waitFor = _movingBalls.Count == 0 ? _vanishingBalls : _movingBalls;
 
             switch (ball.whatBonusNext)
             {
@@ -529,7 +513,7 @@ namespace Match3.Entities
 
             newBall.Initialize();
             newBall.Position = position;
-            newBall.Wait(_vanishingBalls, ElementState.Moving);
+            newBall.Wait(waitFor, ElementState.Moving);
 
             _gameField.RemoveAt(index);
             _gameField.Insert(index, newBall);
@@ -587,6 +571,61 @@ namespace Match3.Entities
 
             _destroyers.Add(firstDestroyer);
             _destroyers.Add(secondDestroyer);
+        }
+
+
+        private void manageDestroyersInterception()
+        {
+            for (int i = 0; i < _destroyers.Count; i++)
+            {
+                Destroyer destroyer = (Destroyer)_destroyers[i];
+
+                int x = ((int)destroyer.Position.X - Constants.GameFieldX) / Constants.GameFieldCell;
+                int y = ((int)destroyer.Position.Y - Constants.GameFieldY) / Constants.GameFieldCell;
+                int index = y * _width + x;
+
+                if (index > _width * _height - 1) { continue; }
+
+                destroyBall((BallElement)_gameField[index]);
+            }
+        }
+
+
+        private void updateDestroyers(GameTime gameTime)
+        {
+            List<Destroyer> toRemove = new List<Destroyer>();
+
+            foreach (Destroyer destroyer in _destroyers)
+            {
+                destroyer.Update(gameTime);
+
+                if (destroyer.State == ElementState.Removed)
+                {
+                    toRemove.Add(destroyer);
+                    continue;
+                }
+            }
+
+            foreach (Destroyer destroyer in toRemove)
+            {
+                _destroyers.Remove(destroyer);
+            }
+        }
+
+
+        private void destroyBall(BallElement ball)
+        {
+            if (!(ball.State == ElementState.Vanishing || ball.State == ElementState.Removed))
+            {
+                if (ball.GetType().Equals(typeof(LineElement)))
+                {
+                    createDestroyers((LineElement)ball);
+                }
+
+                ball.Vanish();
+                _vanishingBalls.Add(ball);
+                _score += 10;
+            }
         }
 
     }

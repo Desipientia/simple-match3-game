@@ -49,11 +49,11 @@ namespace Match3.Entities
 
             _origin.X = Constants.GameFieldCell / 2;
             _origin.Y = Constants.GameFieldCell / 2;
-            Position.X += _origin.X;
-            Position.Y += _origin.Y;
+
+            Vector2 shiftedPosition = new Vector2(Position.X + _origin.X, Position.Y + _origin.Y);
 
             _spriteBatch.Begin();
-            _spriteBatch.Draw(IsActive ? _activeTexture : _baseTexture, Position, null, Color.White, rotation, _origin, 1.0f, SpriteEffects.None, 0f);
+            _spriteBatch.Draw(IsActive ? _activeTexture : _baseTexture, shiftedPosition, null, Color.White, rotation, _origin, 1.0f, SpriteEffects.None, 0f);
             _spriteBatch.End();
         }
 
