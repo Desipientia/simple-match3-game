@@ -345,27 +345,29 @@ namespace Match3.Entities
             const int n = 32;
             int currentIndex = 0;
             int[] chainsArray = new int[n];
+            string[] directionsArray = new string[n];
 
             foreach (BallElement ball in _gameField)
             {
                 int ballIndex = getBallCollectionIndex(ball);
                    
-                currentIndex = addBallChain(ball, currentIndex, ballIndex, chainsArray, "horisontal");
-                currentIndex = addBallChain(ball, currentIndex, ballIndex, chainsArray, "vertical"); 
+                currentIndex = addBallChain(ball, currentIndex, ballIndex, chainsArray, directionsArray, "horisontal");
+                currentIndex = addBallChain(ball, currentIndex, ballIndex, chainsArray, directionsArray, "vertical"); 
             }
 
             return new Tuple<int, int[]>(currentIndex, chainsArray);
         }
 
 
-        private int addBallChain(BallElement ball, int currentIndex, int ballIndex, int[] chainsArray, string direction)
+        private int addBallChain(BallElement ball, int currentIndex, int ballIndex, int[] chainsArray, string[] directionsArray, string direction)
         {
-            int i;
+            int i, searchIndex;
             int x = ball.GridPosition.X;
             int y = ball.GridPosition.Y;
             int n = direction == "vertical" ? _height - y : _width - x;
 
             int[] tempArray = new int[n - 1];
+            string[] tempDirArray = new string[n - 1];
 
             for (i = 1; i < n; i++)
             {
@@ -374,6 +376,7 @@ namespace Match3.Entities
                 if (ball.CurrentColor == ((BallElement)_gameField[index]).CurrentColor)
                 {
                     tempArray[i - 1] = index;
+                    tempDirArray[i - 1] = direction;
                 }
                 else
                 {
@@ -384,14 +387,20 @@ namespace Match3.Entities
             if (i >= 3)
             {
                 Array.Copy(tempArray, 0, chainsArray, currentIndex, i - 1);
+                Array.Copy(tempDirArray, 0, directionsArray, currentIndex, i - 1);
                 currentIndex += i - 1;
 
-                if (Array.IndexOf(chainsArray, ballIndex) == -1)
+                if ((searchIndex = Array.IndexOf(chainsArray, ballIndex)) == -1)
                 {
                     chainsArray[currentIndex++] = ballIndex;
+                    directionsArray[currentIndex] = direction;
+                }
+                else if (directionsArray[searchIndex] != direction)
+                {
+                    ball.whatBonusNext = BonusType.Bomb;
                 }
 
-                if (ball.State != ElementState.Vanishing && ball.State != ElementState.Removed)
+                    if (ball.State != ElementState.Vanishing && ball.State != ElementState.Removed)
                 { 
                     if (i == 4)
                     {
@@ -617,6 +626,8 @@ namespace Match3.Entities
                     createBlast((BombElement)ball);
                 }
 
+                Debug.WriteLine("--Destroyed");
+
                 ball.Vanish();
                 _vanishingBalls.Add(ball);
                 _score += 10;
@@ -642,14 +653,26 @@ namespace Match3.Entities
 
             int x = ((int)position.X - Constants.GameFieldX) / Constants.GameFieldCell;
             int y = ((int)position.Y - Constants.GameFieldY) / Constants.GameFieldCell;
-            int startIndex = y * _width + x;
-            int bombIndex = bomb.GridPosition.Y * _width + bomb.GridPosition.X;
+            //int bombIndex = bomb.GridPosition.Y * _width + bomb.GridPosition.X;
 
-            for (int i = startIndex; i < startIndex + Constants.BlastWidth * Constants.BlastHeight; i++)
+            Debug.Write("Blast: ");
+            Debug.WriteLine(position);
+
+            for (int i = x - 1; i <= x + 1; i++)
             {
-                if (i != bombIndex && i >= 0 && i < _gameField.Count)
+                for (int j = y - 1; j <= y + 1; j++)
                 {
-                    destroyBall((BallElement)_gameField[i]);
+                    if (!(i == x && j == y))
+                    {
+                        int index = j * _width + i;
+
+                        if (index >= 0 && index < _gameField.Count)
+                        {
+                            Debug.Write("Destroy: ");
+                            Debug.WriteLine(i);
+                            destroyBall((BallElement)_gameField[index]);
+                        }
+                    }
                 }
             }
         }
