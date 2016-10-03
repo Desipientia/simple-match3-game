@@ -62,9 +62,11 @@
     <Compile Include="Constants.cs" />
     <Compile Include="Entities\BombElement.cs" />
     <Compile Include="Entities\Button.cs" />
+    <Compile Include="Entities\Destroyer.cs" />
     <Compile Include="Entities\GameScreen.cs" />
     <Compile Include="Entities\MainMenu.cs" />
     <Compile Include="Entities\LineElement.cs" />
+    <Compile Include="Entities\Match3GameElement.cs" />
     <Compile Include="Match3Game.cs" />
     <Compile Include="Program.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />

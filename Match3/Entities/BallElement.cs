@@ -1,29 +1,8 @@
-﻿using System.Diagnostics;
-using Microsoft.Xna.Framework;
+﻿using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Graphics;
 
-namespace Match3
+namespace Match3.Entities
 {
-    public enum BallColor
-    {
-        Red,
-        Yellow,
-        Green,
-        Blue,
-        Light
-    }
-
-
-    public enum BallState
-    {
-        Normal,
-        Moving,
-        Waiting,
-        Vanishing,
-        Removed
-    }
-
-
     public enum BonusType
     {
         None,
@@ -33,30 +12,25 @@ namespace Match3
     }
 
 
-    class BallElement : DrawableGameComponent
+    class BallElement : Match3GameElement
     {
         public bool IsActive = false;
         public bool IsNew = false;
 
         public Point GridPosition;
-        public BallColor CurrentColor;
-        public Vector2 Position;
-
-        public BallState State;
+        
         public BonusType whatBonusNext = BonusType.None;
 
-        protected BallState _nextState;
+        protected ElementState _nextState;
         protected GameComponentCollection _waitForBalls;
-
-        protected Texture2D _baseTexture;
+        
         protected Texture2D _activeTexture;
-        protected SpriteBatch _spriteBatch;
 
         private float _scale;
         private float _scaleVelocity;
         
 
-        public BallElement(BallColor ballColor, Point position, Match3Game game) : base(game)
+        public BallElement(ElementColor ballColor, Point position, Match3Game game) : base(game)
         {
             CurrentColor = ballColor;
             GridPosition = position;
@@ -79,7 +53,7 @@ namespace Match3
         public override void Initialize()
         {
             Position = new Vector2(0, 0);
-            State = BallState.Normal;
+            State = ElementState.Normal;
             _spriteBatch = new SpriteBatch(Game.GraphicsDevice);
             
 
@@ -103,13 +77,13 @@ namespace Match3
         {
             IsNew = false;
 
-            if (State == BallState.Removed) { return; }
+            if (State == ElementState.Removed) { return; }
 
-            if (State == BallState.Waiting)
+            if (State == ElementState.Waiting)
             {
                 foreach (BallElement ball in _waitForBalls)
                 {
-                    if (ball.State == BallState.Moving || ball.State == BallState.Vanishing) { return; }
+                    if (ball.State == ElementState.Moving || ball.State == ElementState.Vanishing) { return; }
                 }
                 State = _nextState;
             }
@@ -117,13 +91,13 @@ namespace Match3
             int endPositionX = Constants.GameFieldX + Constants.GameFieldCell * GridPosition.X;
             int endPositionY = Constants.GameFieldY + Constants.GameFieldCell * GridPosition.Y;
 
-            if (State == BallState.Moving)
+            if (State == ElementState.Moving)
             {
                 Position += getMoveDirection(endPositionX, endPositionY);
 
                 if (Position.X >= endPositionX && Position.Y >= endPositionY)
                 {
-                    State = BallState.Normal;
+                    State = ElementState.Normal;
                 }
             }
             else
@@ -131,13 +105,13 @@ namespace Match3
                 Position.X = endPositionX;
                 Position.Y = endPositionY;
 
-                if (State == BallState.Vanishing)
+                if (State == ElementState.Vanishing)
                 {
                     _scale -= _scaleVelocity;
 
                     if (_scale <= 0)
                     {
-                        State = BallState.Removed;
+                        State = ElementState.Removed;
                     }
                 }
             }
@@ -150,14 +124,14 @@ namespace Match3
         {
             switch (State)
             {
-                case BallState.Waiting:
-                case BallState.Removed:
+                case ElementState.Waiting:
+                case ElementState.Removed:
                     return;
-                case BallState.Normal:
-                case BallState.Moving:
+                case ElementState.Normal:
+                case ElementState.Moving:
                     drawNormal();
                     break;
-                case BallState.Vanishing:
+                case ElementState.Vanishing:
                     drawVanishing();
                     break;
                 default:
@@ -168,9 +142,9 @@ namespace Match3
         }
 
 
-        public void Wait(GameComponentCollection forWhat, BallState nextState)
+        public void Wait(GameComponentCollection forWhat, ElementState nextState)
         {
-            State = BallState.Waiting;
+            State = ElementState.Waiting;
             _nextState = nextState;
             _waitForBalls = forWhat;
         }
@@ -178,41 +152,13 @@ namespace Match3
 
         public void Vanish()
         {
-            State = BallState.Vanishing;
+            State = ElementState.Vanishing;
             _scale = .8f;
             _scaleVelocity = .05f;
         }
 
-
-        protected string getBaseTextureName()
-        {
-            string textureName = "img/";
-
-            switch (CurrentColor)
-            {
-                case BallColor.Red:
-                    textureName += "red";
-                    break;
-                case BallColor.Yellow:
-                    textureName += "yellow";
-                    break;
-                case BallColor.Green:
-                    textureName += "green";
-                    break;
-                case BallColor.Blue:
-                    textureName += "blue";
-                    break;
-                case BallColor.Light:
-                    textureName += "light";
-                    break;
-                default:
-                    return "";
-            }
-            return textureName;
-        }
-
         
-        protected void drawNormal()
+        protected virtual void drawNormal()
         {
             _spriteBatch.Begin();
             _spriteBatch.Draw(IsActive ? _activeTexture : _baseTexture, Position, Color.White);
@@ -220,7 +166,7 @@ namespace Match3
         }
 
 
-        protected void drawVanishing()
+        protected virtual void drawVanishing()
         {
             _spriteBatch.Begin();
             _spriteBatch.Draw(_baseTexture, Position, null, Color.White, 0f, new Vector2(0, 0), _scale, SpriteEffects.None, 0f);

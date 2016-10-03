@@ -1,26 +1,33 @@
-﻿using Microsoft.Xna.Framework;
+﻿using System;
+using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Graphics;
 
-namespace Match3
+namespace Match3.Entities
 {
     class LineElement : BallElement
     {
-        private BonusType _lineType;
-        //private 
+        private BonusType LineType;
+        private Vector2 _origin;
 
-        public LineElement(BonusType type, BallColor color, Point position, Match3Game game) : base(color, position, game)
+        public LineElement(BonusType type, ElementColor color, Point position, Match3Game game) : base(color, position, game)
         {
-            _lineType = type;
+            LineType = type;
         }
 
-        public LineElement(BallElement ball) : base(ball)
+        public LineElement(LineElement ball) : base(ball)
         {
-            _lineType = ball.whatBonusNext;
+            LineType = ball.LineType;
+        }
+
+        public LineElement(BonusType type, BallElement ball) : base(ball)
+        {
+            LineType = type;
         }
 
 
         public override void Initialize()
         {
+            _origin = new Vector2(0, 0);
 
             base.Initialize();
         }
@@ -36,15 +43,32 @@ namespace Match3
         }
 
 
-        public override void Update(GameTime gameTime)
+        protected override void drawNormal()
         {
-            base.Update(gameTime);
+            float rotation = LineType == BonusType.HorisontalLine ? 0 : (90 * MathHelper.Pi / 180);
+
+            _origin.X = Constants.GameFieldCell / 2;
+            _origin.Y = Constants.GameFieldCell / 2;
+            Position.X += _origin.X;
+            Position.Y += _origin.Y;
+
+            _spriteBatch.Begin();
+            _spriteBatch.Draw(IsActive ? _activeTexture : _baseTexture, Position, null, Color.White, rotation, _origin, 1.0f, SpriteEffects.None, 0f);
+            _spriteBatch.End();
         }
 
 
-        public override void Draw(GameTime gameTime)
+        public Tuple<Direction, Direction> GetDestroyersDirection()
         {
-            base.Draw(gameTime);
+            switch (LineType)
+            {
+                case BonusType.VerticalLine:
+                    return new Tuple<Direction, Direction>(Direction.Up, Direction.Down);
+                case BonusType.HorisontalLine:
+                    return new Tuple<Direction, Direction>(Direction.Right, Direction.Left);
+                default:
+                    return null;
+            }
         }
 
     }
