@@ -14,7 +14,8 @@ namespace Match3.Entities
 
     class DestroyerElement : Match3GameElement
     {
-        private Direction _direction;
+        public Direction Direction;
+
         private Vector2 _velocity;
         private float _rotation;
 
@@ -27,7 +28,7 @@ namespace Match3.Entities
             Position = position;
             State = ElementState.Moving;
 
-            _direction = direction;
+            Direction = direction;
             _fieldWidth = fieldWidth;
             _fieldHeight = fieldHeight;
         }
@@ -90,7 +91,7 @@ namespace Match3.Entities
         {
             float speed = Constants.AnimationVelocity / 1.5f;
 
-            switch (_direction)
+            switch (Direction)
             {
                 case Direction.Up:
                     return new Tuple<int, Vector2>(180, new Vector2(0, -speed));
@@ -108,7 +109,7 @@ namespace Match3.Entities
 
         private bool isAtBorder()
         {
-            switch (_direction)
+            switch (Direction)
             {
                 case Direction.Up:
                     return Position.Y < Constants.GameFieldY;

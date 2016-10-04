@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Diagnostics;
+using System.Threading;
 using System.Collections.Generic;
 using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Graphics;
@@ -455,7 +456,6 @@ namespace Match3.Entities
             manageDestroyersInterception();
 
             fillEmptyCells();
-            _vanishingBalls = null;
         }  
 
 
@@ -603,13 +603,36 @@ namespace Match3.Entities
             {
                 DestroyerElement destroyer = (DestroyerElement)_destroyers[i];
 
+                if (destroyer.State == ElementState.Removed) { continue; }
+
                 int x = ((int)destroyer.Position.X - Constants.GameFieldX) / Constants.GameFieldCell;
                 int y = ((int)destroyer.Position.Y - Constants.GameFieldY) / Constants.GameFieldCell;
                 int index = y * _width + x;
 
-                if (index > _width * _height - 1) { continue; }
+                bool isOutOfBorder = false;
 
-                destroyBall((BallElement)_gameField[index]);
+                switch (destroyer.Direction)
+                {
+                    case Direction.Up:
+                        isOutOfBorder = y < 0;
+                        break;
+                    case Direction.Down:
+                        isOutOfBorder = y >= _height;
+                        break;
+                    case Direction.Right:
+                        isOutOfBorder = x >= _width;
+                        break;
+                    case Direction.Left:
+                        isOutOfBorder = x < 0;
+                        break;
+                    default:
+                        break;
+                }
+
+                if (!isOutOfBorder)
+                {
+                    destroyBall((BallElement)_gameField[index]);
+                }
             }
         }
 
@@ -626,8 +649,6 @@ namespace Match3.Entities
                     createBlast((BombElement)ball);
                 }
 
-                Debug.WriteLine("--Destroyed");
-
                 ball.Vanish();
                 _vanishingBalls.Add(ball);
                 _score += 10;
@@ -641,22 +662,27 @@ namespace Match3.Entities
             int height = _height * Constants.GameFieldCell;
 
             Vector2 position = new Vector2(0, 0);
+            BlastElement blast;
+            Timer timer;
 
             position.X = Constants.GameFieldX + Constants.GameFieldCell * (bomb.GridPosition.X) + Constants.GameFieldCell / 2;
             position.Y = Constants.GameFieldY + Constants.GameFieldCell * (bomb.GridPosition.Y) + Constants.GameFieldCell / 2;
 
-            BlastElement blast = new BlastElement(position, (Match3Game)Game);
+            blast = new BlastElement(position, (Match3Game)Game);
 
             blast.Initialize();
 
             _blasts.Add(blast);
 
-            int x = ((int)position.X - Constants.GameFieldX) / Constants.GameFieldCell;
-            int y = ((int)position.Y - Constants.GameFieldY) / Constants.GameFieldCell;
-            //int bombIndex = bomb.GridPosition.Y * _width + bomb.GridPosition.X;
+            timer = new Timer(activateBlast, blast, 250, Timeout.Infinite);
+        }
 
-            Debug.Write("Blast: ");
-            Debug.WriteLine(position);
+        private void activateBlast(Object obj)
+        {
+            BlastElement blast = (BlastElement)obj;
+
+            int x = ((int)blast.Position.X - Constants.GameFieldX) / Constants.GameFieldCell;
+            int y = ((int)blast.Position.Y - Constants.GameFieldY) / Constants.GameFieldCell;
 
             for (int i = x - 1; i <= x + 1; i++)
             {
@@ -668,8 +694,6 @@ namespace Match3.Entities
 
                         if (index >= 0 && index < _gameField.Count)
                         {
-                            Debug.Write("Destroy: ");
-                            Debug.WriteLine(i);
                             destroyBall((BallElement)_gameField[index]);
                         }
                     }

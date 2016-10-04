@@ -1,7 +1,4 @@
-﻿using System;
-using Microsoft.Xna.Framework;
-
-namespace Match3
+﻿namespace Match3
 {
     static class Constants
     {
