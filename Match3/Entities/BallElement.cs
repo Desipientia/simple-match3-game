@@ -19,7 +19,7 @@ namespace Match3.Entities
 
         public Point GridPosition;
         
-        public BonusType whatBonusNext = BonusType.None;
+        public BonusType WhatBonusNext = BonusType.None;
 
         protected ElementState _nextState;
         protected GameComponentCollection _waitForBalls;

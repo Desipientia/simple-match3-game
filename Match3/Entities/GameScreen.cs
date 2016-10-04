@@ -398,7 +398,7 @@ namespace Match3.Entities
                 }
                 else if (directionsArray[searchIndex] != direction)
                 {
-                    ball.whatBonusNext = BonusType.Bomb;
+                    ball.WhatBonusNext = BonusType.Bomb;
                 }
 
                     if (ball.State != ElementState.Vanishing && ball.State != ElementState.Removed)
@@ -411,16 +411,16 @@ namespace Match3.Entities
                         BallElement ballToChange = ((BallElement)_gameField[lineIndex]);
 
                         // TODO: Find out, why line overrides bomb without if. 
-                        if (ballToChange.whatBonusNext == BonusType.None)
+                        if (ballToChange.WhatBonusNext == BonusType.None)
                         {
-                            ballToChange.whatBonusNext = lineType;
+                            ballToChange.WhatBonusNext = lineType;
                         }
                     }
                     else if (i >= 5)
                     {
                         int bombIndex = getLastMovedBallIndex(tempArray, i - 1, ballIndex);
 
-                        ((BallElement)_gameField[bombIndex]).whatBonusNext = BonusType.Bomb;
+                        ((BallElement)_gameField[bombIndex]).WhatBonusNext = BonusType.Bomb;
                     }
                 }
             }
@@ -472,7 +472,7 @@ namespace Match3.Entities
        
                 if (ball.State != ElementState.Removed) { continue; }
 
-                if (ball.whatBonusNext == BonusType.None && (aboveCellIndex = getFromAboveCell(i)) != -1)
+                if (ball.WhatBonusNext == BonusType.None && (aboveCellIndex = getFromAboveCell(i)) != -1)
                 {
                     BallElement aboveBall = (BallElement)_gameField[aboveCellIndex];
                     BallElement newBall = createNewBallElement(aboveBall);
@@ -517,7 +517,7 @@ namespace Match3.Entities
             Vector2 position = ball.Position;
             GameComponentCollection waitFor = _movingBalls.Count == 0 ? _vanishingBalls : _movingBalls;
 
-            switch (ball.whatBonusNext)
+            switch (ball.WhatBonusNext)
             {
                 case BonusType.None:
                     newBall = new BallElement((ElementColor)rand.Next(0, 5), ball.GridPosition, (Match3Game)Game);
@@ -525,7 +525,7 @@ namespace Match3.Entities
                     break;
                 case BonusType.VerticalLine:
                 case BonusType.HorisontalLine:
-                    newBall = new LineElement(ball.whatBonusNext, ball);
+                    newBall = new LineElement(ball.WhatBonusNext, ball);
                     break;
                 case BonusType.Bomb:
                     newBall = new BombElement(ball);
